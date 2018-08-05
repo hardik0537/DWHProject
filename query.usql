@@ -1,0 +1,40 @@
+@data =
+    EXTRACT 
+            datetime DateTime,
+            date DateTime,
+            humidity double?,
+            pressure double?,
+            temperature double?,
+            wind_direction double?,
+            wind_speed double?,
+            weather_desc_cat double?
+    FROM "/dwproject/ny_climate.csv"
+    USING Extractors.Csv(encoding: Encoding.UTF8, skipFirstNRows: 1);
+
+OUTPUT @data
+TO "/output/ny_climate-usql.csv"
+USING Outputters.Csv(outputHeader: true);
+
+@rs1 =
+    SELECT date.ToString("dd-MM-yyyy") AS date, AVG(humidity) AS avg_humidity, AVG(pressure) AS avg_pressure, 
+    AVG(temperature) AS avg_temperature, AVG(wind_direction) AS avg_wind_direction,
+    AVG(wind_speed) AS avg_wind_speed, AVG(weather_desc_cat) AS avg_weather_desc_cat, 
+	STDEV(humidity) AS std_humidity, STDEV(pressure) AS std_pressure, 
+    STDEV(temperature) AS std_temperature, STDEV(wind_direction) AS std_wind_direction,
+    STDEV(wind_speed) AS std_wind_speed, STDEV(weather_desc_cat) AS std_weather_desc_cat,
+	MIN(humidity) AS min_humidity, MIN(pressure) AS min_pressure, 
+    MIN(temperature) AS min_temperature, MIN(wind_direction) AS min_wind_direction,
+    MIN(wind_speed) AS min_wind_speed, MIN(weather_desc_cat) AS min_weather_desc_cat,
+	MAX(humidity) AS max_humidity, MAX(pressure) AS max_pressure, 
+    MAX(temperature) AS max_temperature, MAX(wind_direction) AS max_wind_direction,
+    MAX(wind_speed) AS max_wind_speed, MAX(weather_desc_cat) AS max_weather_desc_cat
+    FROM @data
+    GROUP BY  date
+    ORDER BY date DESC
+    OFFSET 0 ROWS;
+
+
+
+OUTPUT @rs1
+TO "/output/usql-avg.csv"
+USING Outputters.Csv(outputHeader: true);
